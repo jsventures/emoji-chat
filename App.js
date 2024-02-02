@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // Helper to generate unique IDs for each emote
 const generateUID = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -21,6 +25,56 @@ const Emotes = ({ options, onEmotePress }) => {
 const Main = () => {
   const [emotes, setEmotes] = useState([]);
 
+  const createAnimationStyle = (animation) => {
+    const windowHeight = Dimensions.get('window').height;
+    const randomTranslateY = -windowHeight * (0.25 + Math.random() * 0.25)
+    const randomX = Math.random() * 150 - 75; // Random value between -50 and 50
+    const randomY = Math.random() * 200 + 100; // Random value between 200 and 300
+    const randomScale = 0.5 + Math.random() * 1; // Random scale between 0.5 and 1.5
+    const randomRotation = Math.random() * 360; // Random rotation between 0 and 360 degrees
+
+    return {
+      transform: [
+        {
+          translateY: animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [randomY, randomTranslateY]
+          })
+        },
+        {
+          translateX: animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [randomX, randomX * 2] // Modify to control the spread
+          })
+        },
+        {
+          scale: animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [randomScale, 0.6]
+          })
+        },
+        {
+          rotate: animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-randomRotation + 'deg', randomRotation + 'deg']
+          })
+        },
+      ],
+      opacity: animation.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [1, 0.25, 0]
+      })
+    };
+  };
+
+  const multipleHandleEmote = async (emoji) => {
+    const count = Math.random() * 15
+    for (let i = 0; i < count; i++) {
+      handleEmote(emoji);
+      await sleep(Math.random() * 100);
+    }
+  }
+
   const handleEmote = (emoji) => {
     const newEmote = {
       id: generateUID(),
@@ -28,6 +82,7 @@ const Main = () => {
       animation: new Animated.Value(0), // Initial value for animation
     };
 
+    newEmote.animationStyle = createAnimationStyle(newEmote.animation);
     setEmotes((currentEmotes) => [...currentEmotes, newEmote]);
 
     // Start animation
@@ -45,35 +100,12 @@ const Main = () => {
     <View style={styles.container}>
       <View style={styles.emotesContainer}>
         {emotes.map((emote) => {
-          const translateY = emote.animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, -Dimensions.get('window').height], // Adjust based on your view height
-          });
-
-          const rotate = emote.animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: ['0deg', '360deg'],
-          });
-
-          const scale = emote.animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [1, 0.6],
-          });
-
-          const opacity = emote.animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [1, 0],
-          });
-
           return (
             <Animated.View
               key={emote.id}
               style={[
                 styles.emote,
-                {
-                  transform: [{ translateY }, { rotate }, { scale }],
-                  opacity: opacity,
-                },
+                emote.animationStyle,
               ]}
             >
               <Text style={{ fontSize: 40 }}>{emote.emoji}</Text>
@@ -81,7 +113,7 @@ const Main = () => {
           );
         })}
       </View>
-      <Emotes options={['😍', '😂', '🔥', '🎉']} onEmotePress={handleEmote} />
+      <Emotes options={['😍', '😂', '🔥', '🎉']} onEmotePress={multipleHandleEmote} />
     </View>
   );
 };
