@@ -1,58 +1,81 @@
-import { init, useQuery, transact, tx } from '@instantdb/react-native'
-import { useState } from 'react'
-import { View, Text, Linking, Button, StyleSheet } from 'react-native'
+import React, { useState } from 'react';
+import {
+  View, Text, TouchableOpacity, StyleSheet,
+} from 'react-native';
+import { init, useQuery, transact, id, tx } from '@instantdb/react-native';
+import EmoteAnimator from './EmoteAnimator';
 
-// Visit https://instantdb.com/dash to get your APP_ID :)
-const APP_ID = 'ee1eed1e-7ed6-4819-880b-3bc53b65e62c'
 
-init({ appId: APP_ID })
-
-function App() {
-  const { isLoading, error, data } = useQuery({ colors: {} })
-  if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text>Loading...</Text>
-      </View>
-    )
-  }
-
-  if (error) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text>Error: {error?.message}</Text>
-      </View>
-    )
-  }
-
-  return <Main data={data} />
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const generateUID = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
 
-
-function Main({ data }) {
-  const [messages, setMessages] = useState([]);
-
-  const addMessage = (emoji) => {
-    setMessages([...messages, emoji]);
-  };
-
+const Emotes = ({ options, onEmotePress }) => {
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Text>Hello world!</Text>
-      {messages.map((message, index) => (
-        <Text key={index} style={{ fontSize: 24, margin: 5 }}>
-          {message}
-        </Text>
+    <View style={styles.emotesBar}>
+      {options.map((emoji) => (
+        <TouchableOpacity key={emoji} onPress={() => onEmotePress(emoji)} style={styles.emoteButton}>
+          {emoji == 'FRI'
+            ? <Text style={{ fontSize: 36, color: 'red', fontWeight: 'bold' }}>{emoji}</Text>
+            : <Text style={{ fontSize: 36 }}>{emoji}</Text>}
+        </TouchableOpacity>
       ))}
-      <View className="absolute bottom-0 flex-row justify-around w-full bg-white py-2">
-        <Button title="😀" onPress={() => addMessage('😀')} className="bg-blue-500 text-white font-bold py-2 px-4 rounded" />
-        <Button title="😂" onPress={() => addMessage('😂')} className="bg-blue-500 text-white font-bold py-2 px-4 rounded" />
-        <Button title="😍" onPress={() => addMessage('😍')} className="bg-blue-500 text-white font-bold py-2 px-4 rounded" />
-      </View>
     </View>
   );
+};
+
+init({ appId: "1cbb853a-3058-478d-863f-d6030bc7964b" });
+
+const onEmotePress = async (emoji) => {
+  const mId = id();
+  transact(tx.messages[mId].update({ emoji, createdAt: Date.now() }));
+  await sleep(2000);
+  transact(tx.messages[mId].delete());
 }
 
+const Main = () => {
+  const { isLoading, error, data } = useQuery({ messages: {} });
+  if (isLoading) return <Text>Loading...</Text>;
+  if (error) return <Text>Error: {error.message}</Text>;
+  const { messages } = data;
+  return (
+    <View style={styles.container}>
+      <EmoteAnimator messages={messages} />
+      <Emotes options={['👋', '🎉', '😊', '🇺🇸', 'FRI']} onEmotePress={onEmotePress} />
+    </View>
+  );
+};
 
-export default App
+// Styles
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'black'
+  },
+  emotesContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  emotesBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    padding: 20,
+    paddingTop: 40,
+    paddingBottom: 60,
+  },
+  emoteButton: {
+    margin: 5,
+    padding: 10,
+  },
+  emote: {
+    position: 'absolute',
+    bottom: 100,
+  },
+});
+
+export default Main;
