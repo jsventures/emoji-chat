@@ -83,7 +83,7 @@ const EmoteAnimator = ({ messages }) => {
   }, [messages]);
 
   const multipleHandleEmote = async (emoji) => {
-    const count = Math.random() * 15
+    const count = Math.random() * 10
     for (let i = 0; i < count; i++) {
       handleEmote(emoji);
       await sleep(Math.random() * 100);
@@ -123,10 +123,10 @@ const EmoteAnimator = ({ messages }) => {
             ]}
           >
             {emote.emoji == 'FRI'
-              ? <Text style={{ fontSize: 40, color: 'red', fontWeight: 'bold' }}>FRIDAY</Text>
+              ? <Text style={{ fontSize: 60, color: 'red', fontWeight: 'bold' }}>FRIDAY</Text>
               : emote.emoji == '😊'
-                ? <Text style={{ fontSize: 40, color: 'blue', fontWeight: 'bold' }}>HAPPY</Text>
-                : <Text style={{ fontSize: 40 }}>{emote.emoji}</Text>}
+                ? <Text style={{ fontSize: 60, color: 'blue', fontWeight: 'bold' }}>HAPPY</Text>
+                : <Text style={{ fontSize: 72 }}>{emote.emoji}</Text>}
           </Animated.View>
         );
       })}
